@@ -1,5 +1,5 @@
-selenium
-beautifulsoup4
-requests
 streamlit
-webdriver-manager
+requests
+beautifulsoup4
+yt-dlp
+duckduckgo-search
