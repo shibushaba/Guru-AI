@@ -3,7 +3,7 @@ from agent import agent_execute
 
 st.set_page_config(page_title="Guru-AI", page_icon="🦾")
 
-st.markdown("## Guru-AI — Learn with Focus")
+st.markdown("Guru-AI — gambare gambare")
 
 # -----------------------
 # SESSION STATE
@@ -63,7 +63,7 @@ if st.session_state.step == "mode":
 elif st.session_state.step == "domain":
 
     with st.chat_message("assistant"):
-        st.markdown("Which domain do you want to study?")
+        st.markdown("Which domain do you want to CONQUER?")
 
         if st.button("Tech", key="dom_tech"):
             st.session_state.domain = "tech"
@@ -92,9 +92,9 @@ elif st.session_state.step == "domain":
 elif st.session_state.step == "topic":
 
     with st.chat_message("assistant"):
-        st.markdown("What topic do you want to learn?")
+        st.markdown("What do you want to SMASH!! today?")
 
-    topic = st.chat_input("Type your topic here...")
+    topic = st.chat_input("Anything on Earth...")
 
     if topic:
         st.session_state.topic = topic
@@ -110,7 +110,7 @@ elif st.session_state.step == "topic":
 elif st.session_state.step == "execute":
 
     with st.chat_message("assistant"):
-        with st.spinner("Preparing your learning pack..."):
+        with st.spinner("Guru is Cookingg..."):
 
             result = agent_execute(
                 st.session_state.topic,
@@ -148,7 +148,7 @@ elif st.session_state.step == "execute":
         full_pack += f"- {p}\n"
 
     st.session_state.chat.append({"role": "assistant", "content": full_pack})
-    st.session_state.chat.append({"role": "assistant", "content": "What would you like to learn next?"})
+    st.session_state.chat.append({"role": "assistant", "content": "Let's SMASH!! something else next"})
 
     # RESET FLOW
     st.session_state.step = "mode"
