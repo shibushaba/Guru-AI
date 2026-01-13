@@ -2,10 +2,11 @@ import streamlit as st
 from agent import agent_execute
 
 st.set_page_config(page_title="Guru-AI", page_icon="🦾")
-st.title("Guru-AI — gambare gambare")
+
+st.markdown("## Guru-AI — Learn with Focus")
 
 # -----------------------
-# 🧠 SESSION STATE
+# SESSION STATE
 # -----------------------
 
 if "step" not in st.session_state:
@@ -25,7 +26,7 @@ if "chat" not in st.session_state:
 
 
 # -----------------------
-# 💬 CHAT HISTORY
+# CHAT HISTORY
 # -----------------------
 
 for msg in st.session_state.chat:
@@ -33,73 +34,67 @@ for msg in st.session_state.chat:
         st.markdown(msg["content"])
 
 
-def guru_say(text):
-    st.session_state.chat.append({"role": "Guru", "content": text})
-    st.rerun()
-
-
 # -----------------------
-# 🧑‍🏫 STEP 1 — MODE
+# STEP 1 — MODE
 # -----------------------
 
 if st.session_state.step == "mode":
 
-    guru_say("Choose your style...")
+    with st.chat_message("assistant"):
+        st.markdown("Choose your learning style:")
 
-    c1, c2 = st.columns(2)
+        if st.button("Fast", key="fast_mode"):
+            st.session_state.mode = "fast"
+            st.session_state.chat.append({"role": "user", "content": "Fast"})
+            st.session_state.step = "domain"
+            st.rerun()
 
-    if c1.button("Fast !"):
-        st.session_state.mode = "fast"
-        st.session_state.chat.append({"role": "user", "content": "Fast"})
-        st.session_state.step = "domain"
-        st.rerun()
-
-    if c2.button("Deep :)"):
-        st.session_state.mode = "deep"
-        st.session_state.chat.append({"role": "user", "content": "Deep"})
-        st.session_state.step = "domain"
-        st.rerun()
+        if st.button("Deep", key="deep_mode"):
+            st.session_state.mode = "deep"
+            st.session_state.chat.append({"role": "user", "content": "Deep"})
+            st.session_state.step = "domain"
+            st.rerun()
 
 
 # -----------------------
-# 🧑‍🏫 STEP 2 — DOMAIN
+# STEP 2 — DOMAIN
 # -----------------------
 
 elif st.session_state.step == "domain":
 
-    guru_say("Which domain are we conquering?")
+    with st.chat_message("assistant"):
+        st.markdown("Which domain do you want to study?")
 
-    d1, d2, d3, d4 = st.columns(4)
+        if st.button("Tech", key="dom_tech"):
+            st.session_state.domain = "tech"
 
-    if d1.button("Tech"):
-        st.session_state.domain = "tech"
+        if st.button("Science", key="dom_science"):
+            st.session_state.domain = "science"
 
-    if d2.button("Science"):
-        st.session_state.domain = "science"
+        if st.button("Business", key="dom_business"):
+            st.session_state.domain = "business"
 
-    if d3.button("Business"):
-        st.session_state.domain = "business"
-
-    if d4.button("General"):
-        st.session_state.domain = "general"
+        if st.button("General", key="dom_general"):
+            st.session_state.domain = "general"
 
     if st.session_state.domain:
         st.session_state.chat.append(
-            {"role": "user", "content": st.session_state.domain}
+            {"role": "user", "content": st.session_state.domain.capitalize()}
         )
         st.session_state.step = "topic"
         st.rerun()
 
 
 # -----------------------
-# 🧑‍🏫 STEP 3 — TOPIC
+# STEP 3 — TOPIC
 # -----------------------
 
 elif st.session_state.step == "topic":
 
-    guru_say("What do you want to SMASH today...?")
+    with st.chat_message("assistant"):
+        st.markdown("What topic do you want to learn?")
 
-    topic = st.chat_input(placeholder="Anything on Earth...")
+    topic = st.chat_input("Type your topic here...")
 
     if topic:
         st.session_state.topic = topic
@@ -109,13 +104,13 @@ elif st.session_state.step == "topic":
 
 
 # -----------------------
-# 🤖 STEP 4 — EXECUTE
+# STEP 4 — EXECUTE
 # -----------------------
 
 elif st.session_state.step == "execute":
 
-    with st.chat_message("Guru"):
-        with st.spinner("Guru is cooking..."):
+    with st.chat_message("assistant"):
+        with st.spinner("Preparing your learning pack..."):
 
             result = agent_execute(
                 st.session_state.topic,
@@ -124,35 +119,38 @@ elif st.session_state.step == "execute":
             )
 
             reply = f"""
-### 🎯 Topic: {result['topic']}
+**Topic:** {result['topic']}  
 **Mode:** {result['mode']}  
 **Category:** {result['domain']}
 
 {result['message']}
 
-### 🎥 Best Video
+**Video**  
 [{result['video']['title']}]({result['video']['url']})
 
-### 📘 Reading
+**Reading**  
 [{result['reading']['title']}]({result['reading']['url']})
 
-### 📝 Notes
+**Notes**
 """
-
             st.markdown(reply)
 
             for n in result["notes"]:
-                st.write("•", n)
+                st.write("-", n)
 
-            st.subheader("🛠 Practice")
+            st.markdown("**Practice Tasks**")
             for p in result["practice"]:
-                st.write("👉", p)
+                st.write("-", p)
 
-    # Save to chat history
-    st.session_state.chat.append(
-        {"role": "Guru", "content": "Lets do this! what you want SMASH next...?"}    )
+    # Save full pack into chat
+    full_pack = reply + "\n\n**Practice Tasks**\n"
+    for p in result["practice"]:
+        full_pack += f"- {p}\n"
 
-    # Reset flow
+    st.session_state.chat.append({"role": "assistant", "content": full_pack})
+    st.session_state.chat.append({"role": "assistant", "content": "What would you like to learn next?"})
+
+    # RESET FLOW
     st.session_state.step = "mode"
     st.session_state.mode = None
     st.session_state.domain = None

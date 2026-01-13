@@ -1,17 +1,48 @@
 import requests
 from bs4 import BeautifulSoup
+from urllib.parse import urlparse, parse_qs, unquote
+
+
+def clean_url(url):
+    # Fix URLs starting with //
+    if url.startswith("//"):
+        url = "https:" + url
+
+    # Handle DuckDuckGo redirect links
+    if "duckduckgo.com/l/?" in url:
+        parsed = urlparse(url)
+        qs = parse_qs(parsed.query)
+        if "uddg" in qs:
+            url = unquote(qs["uddg"][0])
+
+    return url
+
 
 def generate_notes(url):
+    try:
+        url = clean_url(url)
 
-    res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"})
-    soup = BeautifulSoup(res.text, "html.parser")
+        res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+        soup = BeautifulSoup(res.text, "html.parser")
 
-    paras = soup.find_all("p")
+        notes = []
 
-    notes = []
-    for p in paras:
-        text = p.text.strip()
-        if len(text) > 60 and len(notes) < 8:
-            notes.append(text)
+        # Get first few meaningful paragraphs
+        for p in soup.find_all("p"):
+            text = p.get_text().strip()
+            if len(text) > 60:
+                notes.append(text)
+            if len(notes) >= 6:
+                break
 
-    return notes
+        # Shorten notes
+        short_notes = []
+        for n in notes:
+            if len(n) > 200:
+                n = n[:200] + "..."
+            short_notes.append(n)
+
+        return short_notes
+
+    except Exception as e:
+        return [f"⚠️ Could not extract notes from this page. ({e})"]

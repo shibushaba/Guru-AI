@@ -1,12 +1,12 @@
 import json
 import os
-import google.generativeai as genai
 
 MEM_FILE = "memory.json"
 
-genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-model = genai.GenerativeModel("models/gemini-1.0-pro")
 
+# ---------------------------
+# 🧠 MEMORY SYSTEM
+# ---------------------------
 
 def load_memory():
     if not os.path.exists(MEM_FILE):
@@ -27,14 +27,41 @@ def remember_topic(topic):
     save_memory(mem)
 
 
+# ---------------------------
+# 🛠 PRACTICE GENERATOR (AGENTIC)
+# ---------------------------
+
 def generate_practice(topic):
 
-    prompt = f"""
-Create 3 beginner-friendly practice tasks for learning:
-{topic}
+    t = topic.lower()
 
-They should be simple and actionable.
-"""
+    # ---- TECH PRACTICE ----
+    if any(k in t for k in ["python", "pandas", "java", "react", "django", "api", "sql", "selenium"]):
+        return [
+            f"Install required tools and set up environment for {topic}.",
+            f"Write a small program or script related to {topic}.",
+            f"Modify an example project and observe the result."
+        ]
 
-    res = model.generate_content(prompt).text
-    return [r for r in res.split("\n") if len(r.strip()) > 5]
+    # ---- SCIENCE PRACTICE ----
+    if any(k in t for k in ["physics", "chemistry", "biology", "cell", "atom", "gravity", "photosynthesis"]):
+        return [
+            f"Draw a simple diagram explaining {topic}.",
+            f"Explain {topic} in your own words in 5 sentences.",
+            f"Find a real-life example where {topic} is applied."
+        ]
+
+    # ---- BUSINESS / FINANCE PRACTICE ----
+    if any(k in t for k in ["stock", "market", "finance", "economy", "crypto", "business", "marketing"]):
+        return [
+            f"Read one current news article related to {topic}.",
+            f"Write 3 advantages and 3 risks of {topic}.",
+            f"Explain how {topic} affects normal people."
+        ]
+
+    # ---- GENERAL LEARNING PRACTICE ----
+    return [
+        f"Summarize {topic} in 5 bullet points.",
+        f"Teach {topic} to a friend or in front of a mirror.",
+        f"Search for one real-world application of {topic}."
+    ]
