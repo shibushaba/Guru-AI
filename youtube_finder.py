@@ -1,48 +1,81 @@
-import subprocess
+import requests
+from bs4 import BeautifulSoup
+import urllib.parse
+
+
+HEADERS = {
+    "User-Agent": "Mozilla/5.0"
+}
+
+
+FAST_HINTS = ["crash course", "in 10", "quick", "basics", "beginner", "short"]
+DEEP_HINTS = ["full course", "complete", "masterclass", "full tutorial", "3 hour", "2 hour"]
+
+
+def score_video(title, mode):
+    t = title.lower()
+
+    score = 0
+
+    if mode == "fast":
+        for k in FAST_HINTS:
+            if k in t:
+                score += 3
+        if "full" in t or "complete" in t:
+            score -= 2
+
+    if mode == "deep":
+        for k in DEEP_HINTS:
+            if k in t:
+                score += 3
+        if "crash" in t or "quick" in t:
+            score -= 2
+
+    # Prefer tutorials
+    if "tutorial" in t or "course" in t:
+        score += 1
+
+    return score
+
 
 def get_best_video(topic, mode="fast"):
 
-    query = f"ytsearch5:{topic} tutorial"
-
-    cmd = [
-        "yt-dlp",
-        query,
-        "--print",
-        "%(title)s|||%(duration)s|||%(webpage_url)s",
-        "--no-download"
-    ]
+    query = f"{topic} tutorial site:youtube.com"
+    url = "https://duckduckgo.com/html/?q=" + urllib.parse.quote(query)
 
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True)
-        lines = result.stdout.strip().split("\n")
+        res = requests.get(url, headers=HEADERS, timeout=10)
+        soup = BeautifulSoup(res.text, "html.parser")
     except Exception as e:
-        print(f"Error running yt-dlp: {e}")
+        print("Search failed:", e)
         return None
 
-    fallback = None
+    results = []
 
-    for line in lines:
-        try:
-            if not line.strip(): continue
-            parts = line.split("|||")
-            if len(parts) != 3: continue
-            
-            title, duration, url = parts
-            duration = int(duration)
-            
-            video_data = {"title": title, "url": url}
-            
-            # Save the first valid video as fallback
-            if fallback is None:
-                fallback = video_data
+    for a in soup.select("a.result__a"):
+        title = a.get_text(strip=True)
+        link = a.get("href")
 
-            if mode == "fast" and duration <= 1200:
-                return video_data
-
-            if mode == "deep" and duration > 1200:
-                return video_data
-
-        except Exception:
+        if "youtube.com" not in link:
             continue
 
-    return fallback
+        score = score_video(title, mode)
+
+        results.append({
+            "title": title,
+            "url": link,
+            "score": score
+        })
+
+    if not results:
+        return None
+
+    # Sort by best match
+    results = sorted(results, key=lambda x: x["score"], reverse=True)
+
+    best = results[0]
+
+    return {
+        "title": best["title"],
+        "url": best["url"]
+    }
