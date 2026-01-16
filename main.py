@@ -125,15 +125,20 @@ elif st.session_state.step == "execute":
 
 {result['message']}
 
-**Video**  
-[{result['video']['title']}]({result['video']['url']})
+""",
+            st.markdown(reply)
 
+            if "watch?v=" in result['video']['url'] or "youtu.be" in result['video']['url']:
+                st.video(result['video']['url'])
+            else:
+                st.markdown(f"[{result['video']['title']}]({result['video']['url']})")
+
+            st.markdown(f"""
 **Reading**  
 [{result['reading']['title']}]({result['reading']['url']})
 
 **Notes**
-"""
-            st.markdown(reply)
+""")
 
             for n in result["notes"]:
                 st.write("-", n)
@@ -143,7 +148,28 @@ elif st.session_state.step == "execute":
                 st.write("-", p)
 
     # Save full pack into chat
-    full_pack = reply + "\n\n**Practice Tasks**\n"
+    video_md = f"[{result['video']['title']}]({result['video']['url']})"
+    reading_md = f"[{result['reading']['title']}]({result['reading']['url']})"
+
+    full_pack = f"""
+**Topic:** {result['topic']}
+**Mode:** {result['mode']}
+**Category:** {result['domain']}
+
+{result['message']}
+
+**Video**
+{video_md}
+
+**Reading**
+{reading_md}
+
+**Notes**
+"""
+    for n in result["notes"]:
+        full_pack += f"- {n}\n"
+
+    full_pack += "\n**Practice Tasks**\n"
     for p in result["practice"]:
         full_pack += f"- {p}\n"
 
