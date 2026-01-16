@@ -23,6 +23,7 @@ def generate_notes(url):
         url = clean_url(url)
 
         res = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10)
+        res.raise_for_status()
         soup = BeautifulSoup(res.text, "html.parser")
 
         notes = []
@@ -45,4 +46,18 @@ def generate_notes(url):
         return short_notes
 
     except Exception as e:
-        return [f"⚠️ Could not extract notes from this page. ({e})"]
+        print(f"Notes error: {e}")
+        return [
+            "⚠️ Could not automatically extract detailed notes from this page.",
+            "Please open the link above to read the full tutorial.",
+            "Focus on understanding the core concepts and syntax."
+        ]
+    
+    if not notes:
+        return [
+            "⚠️ Automated note extraction returned no content.",
+             "Please click the link above to read the article directly.",
+             "Summarize the key points yourself as you read."
+        ]
+    
+    return short_notes
